@@ -11,13 +11,12 @@ namespace ClassroomAPI.Services
 
         public BlobService(IConfiguration configuration)
         {
-            // Retrieve the connection string and container name from configuration
-            var connectionString = configuration["AzureBlobStorage:ConnectionString"];
-            _containerName = configuration["AzureBlobStorage:ContainerName"];
+            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+            _containerName = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONTAINER_NAME");
 
-            // Initialize BlobServiceClient with the connection string
             _blobServiceClient = new BlobServiceClient(connectionString);
         }
+
 
         // Method to get a reference to the blob container
         public BlobContainerClient GetBlobContainerClient()
