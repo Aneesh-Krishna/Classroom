@@ -9,8 +9,8 @@ namespace ClassroomAPI.Services
 
         public FileService(IConfiguration configuration)
         {
-            var connectionString = configuration["AZURE_STORAGE_CONNECTION_STRING"];
-            var containerName = configuration["AZURE_STORAGE_CONTAINER_NAME"];
+            var connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING");
+            var containerName = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONTAINER_NAME");
             _blobContainerClient = new BlobContainerClient(connectionString, containerName);
             _blobContainerClient.CreateIfNotExists(PublicAccessType.Blob);
         }
