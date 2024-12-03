@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ClassroomAPI.Services;
+using ClassroomAPI.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,7 +58,9 @@ builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.Ge
 
 builder.Services.AddHangfireServer();
 
-builder.Services.AddSingleton<SchedulingService>();
+builder.Services.AddTransient<NotificationService>();
+
+builder.Services.AddTransient<SchedulingService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -95,5 +98,9 @@ app.UseAuthentication();
 app.UseHttpsRedirection();
 
 app.UseHangfireDashboard();
+
+app.MapControllers();
+
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

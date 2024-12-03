@@ -4,6 +4,7 @@ using ClassroomAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClassroomAPI.Migrations
 {
     [DbContext(typeof(ClassroomDbContext))]
-    partial class ClassroomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241202090303_AddedMaterialAssignmentModels")]
+    partial class AddedMaterialAssignmentModels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,25 +161,13 @@ namespace ClassroomAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SubmittedById")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("AssignmentSubmissionId");
 
                     b.HasIndex("AssignmentId");
-
-                    b.HasIndex("SubmittedById");
 
                     b.ToTable("AssignmentSubmissions");
                 });
@@ -577,13 +568,7 @@ namespace ClassroomAPI.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("ClassroomAPI.Models.ApplicationUser", "SubmittedBy")
-                        .WithMany()
-                        .HasForeignKey("SubmittedById");
-
                     b.Navigation("Assignment");
-
-                    b.Navigation("SubmittedBy");
                 });
 
             modelBuilder.Entity("ClassroomAPI.Models.Chat", b =>

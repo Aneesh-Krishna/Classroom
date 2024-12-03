@@ -15,5 +15,7 @@ namespace ClassroomAPI.Models
         public ICollection<CourseMember> CourseMembers { get; set; } = new List<CourseMember>();
         public ICollection<Chat> Chats { get; set; } = new List<Chat>();
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
+        public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
+        public ICollection<Material> Materials { get; set; } = new List<Material>();
     }
 }

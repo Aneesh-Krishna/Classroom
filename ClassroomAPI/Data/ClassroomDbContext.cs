@@ -19,6 +19,9 @@ namespace ClassroomAPI.Data
         public DbSet<Answer> Answers { get; set; }
         public DbSet<CourseMember> CourseMembers { get; set; }
         public DbSet<Chat> Chats { get; set; }
+        public DbSet<Assignment> Assignments { get; set; }
+        public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
+        public DbSet<Material> Materials { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -86,6 +89,24 @@ namespace ClassroomAPI.Data
                 .WithMany(co => co.Chats)
                 .HasForeignKey(c => c.CourseId)
                 .OnDelete(DeleteBehavior.ClientSetNull);
+
+            builder.Entity<Assignment>()
+                .HasOne(a => a.Course)
+                .WithMany(c => c.Assignments)
+                .HasForeignKey(a => a.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<AssignmentSubmission>()
+                .HasOne(asb => asb.Assignment)
+                .WithMany(a => a.AssignmentSubmissions)
+                .HasForeignKey(asb => asb.AssignmentId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Material>()
+                .HasOne(m => m.Course)
+                .WithMany(c => c.Materials)
+                .HasForeignKey(m => m.CourseId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

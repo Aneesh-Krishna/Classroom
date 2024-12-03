@@ -232,3 +232,4 @@ C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\obj\Debug\net8.0\Classroom
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\obj\Debug\net8.0\ClassroomAPI.genruntimeconfig.cache
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\obj\Debug\net8.0\ref\ClassroomAPI.dll
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\obj\Debug\net8.0\ClassroomAPI.sourcelink.json

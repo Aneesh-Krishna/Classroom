@@ -54,6 +54,10 @@
               "target": "Package",
               "version": "[7.18.2, )"
             },
+            "Azure.Storage.Blobs": {
+              "target": "Package",
+              "version": "[12.23.0, )"
+            },
             "Hangfire": {
               "target": "Package",
               "version": "[1.8.16, )"
