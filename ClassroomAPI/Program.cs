@@ -126,6 +126,8 @@ builder.Services.AddSwaggerGen(c => {
     });
 });
 
+builder.Configuration.AddEnvironmentVariables();
+
 var app = builder.Build();
 
 // Seed roles and admin user
