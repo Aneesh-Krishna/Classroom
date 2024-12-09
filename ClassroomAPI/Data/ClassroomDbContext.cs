@@ -31,24 +31,25 @@ namespace ClassroomAPI.Data
             builder.Entity<Course>()
                 .HasOne(c => c.GroupAdmin)
                 .WithMany(u => u.CourseAdmin)
-                .HasForeignKey(c => c.AdminId);
+                .HasForeignKey(c => c.AdminId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<CourseMember>()
                 .HasOne(cm => cm.Course)
                 .WithMany(c => c.CourseMembers)
                 .HasForeignKey(cm => cm.CourseId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+                .OnDelete(DeleteBehavior.Cascade);
             builder.Entity<CourseMember>()
                 .HasOne(cm => cm.User)
                 .WithMany(u => u.CourseMemberships)
                 .HasForeignKey(cm => cm.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Quiz>()
                 .HasOne(q => q.Course)
                 .WithMany(c => c.Quizzes)
                 .HasForeignKey(q => q.CourseId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Question>()
                 .HasOne(q => q.Quiz)
@@ -66,6 +67,11 @@ namespace ClassroomAPI.Data
                 .HasOne(qr => qr.Quiz)
                 .WithMany(q => q.QuizResponses)
                 .HasForeignKey(qr => qr.QuizId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<QuizResponse>()
+                .HasOne(qr => qr.User)
+                .WithMany(u => u.QuizResponses)
+                .HasForeignKey(qr => qr.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Answer>()
@@ -88,25 +94,35 @@ namespace ClassroomAPI.Data
                 .HasOne(c => c.Course)
                 .WithMany(co => co.Chats)
                 .HasForeignKey(c => c.CourseId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<Chat>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Chats)
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Assignment>()
                 .HasOne(a => a.Course)
                 .WithMany(c => c.Assignments)
                 .HasForeignKey(a => a.CourseId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<AssignmentSubmission>()
                 .HasOne(asb => asb.Assignment)
                 .WithMany(a => a.AssignmentSubmissions)
                 .HasForeignKey(asb => asb.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<AssignmentSubmission>()
+                .HasOne(asb => asb.SubmittedBy)
+                .WithMany(asb => asb.AssignmentSubmissions)
+                .HasForeignKey(asb => asb.UserId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Material>()
                 .HasOne(m => m.Course)
                 .WithMany(c => c.Materials)
                 .HasForeignKey(m => m.CourseId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

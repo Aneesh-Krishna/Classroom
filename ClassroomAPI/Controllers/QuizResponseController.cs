@@ -7,9 +7,8 @@ using System.Security.Claims;
 
 namespace ClassroomAPI.Controllers
 {
-    [Route("api[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class QuizResponseController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -48,7 +47,7 @@ namespace ClassroomAPI.Controllers
 
         //Get all the responses of a user in a course
         [HttpGet("{courseId}/GetAllResponsesOfUser")]
-        public async Task<IActionResult> GetAllResponsesOfUser(Guid courseId, [FromBody] string courseUserId)
+        public async Task<IActionResult> GetAllResponsesOfUser(Guid courseId, [FromForm] string courseUserId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return NotFound("User Id not found!");
@@ -93,7 +92,7 @@ namespace ClassroomAPI.Controllers
 
         //Get all the answers submitted by a user for a quiz
         [HttpGet("{quizId}/GetAnswersByMember")]
-        public async Task<IActionResult> GetAnswersByMember(Guid quizId, [FromBody] string courseUserId)
+        public async Task<IActionResult> GetAnswersByMember(Guid quizId, [FromForm] string courseUserId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return NotFound("User Id not found!");

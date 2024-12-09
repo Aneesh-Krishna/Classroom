@@ -10,7 +10,6 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class MaterialController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -76,7 +75,7 @@ namespace ClassroomAPI.Controllers
 
         //Upload material
         [HttpPost("{courseId}/UploadMaterial")]
-        public async Task<IActionResult> UploadMaterial(Guid courseId, [FromBody] IFormFile file)
+        public async Task<IActionResult> UploadMaterial(Guid courseId,  IFormFile file)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -150,11 +149,5 @@ namespace ClassroomAPI.Controllers
         {
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
-    }
-
-    public class UploadMaterialModel
-    {
-        public string materialName { get; set; } = string.Empty;
-        public IFormFile? file { get; set; }
     }
 }

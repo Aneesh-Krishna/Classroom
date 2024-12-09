@@ -1,0 +1,22 @@
+# Ignore environment and secrets
+appsettings.json
+appsettings.*.json
+
+# Ignore user-specific files
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+
+# Ignore build files
+bin/
+obj/
+
+# Ignore IDE and editor files
+.idea/
+.vs/
+*.log
+
+# Ignore sensitive secrets (optional environment variables)
+secrets.json

@@ -9,7 +9,7 @@
         public ApplicationUser? User { get; set; }
         public DateTime SentAt { get; set; } = DateTime.Now;
 
-        public string Message = string.Empty;
+        public string Message { get; set; } = string.Empty;
         public string? FileUrl { get; set; }
     }
 }

@@ -42,7 +42,7 @@ namespace ClassroomAPI.Controllers
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
-            await _userManager.AddToRoleAsync(user, model.role);
+            await _userManager.AddToRoleAsync(user, user.Role.ToString());
             return Ok(new { user.UserName });
         }
 
@@ -63,7 +63,7 @@ namespace ClassroomAPI.Controllers
             if (!result.Succeeded)
                 return BadRequest(result.Errors);
 
-            await _userManager.AddToRoleAsync(user, model.role);
+            await _userManager.AddToRoleAsync(user, user.Role.ToString());
             return Ok(new { user.UserName });
         }
 
@@ -82,7 +82,7 @@ namespace ClassroomAPI.Controllers
             return Ok(new { token });
         }
 
-        public string GenerateJwtToken(ApplicationUser user)
+        private string GenerateJwtToken(ApplicationUser user)
         {
             var claims = new List<Claim> 
             { 
@@ -116,7 +116,6 @@ namespace ClassroomAPI.Controllers
         public string email { get; set; } = string.Empty;
         public string fullName { get; set; } = string.Empty;
         public string phoneNumber {  get; set; } = string.Empty;
-        public string role { get; set; } = "User";
     }
 
     public class LoginModel

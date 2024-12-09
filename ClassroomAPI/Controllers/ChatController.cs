@@ -51,7 +51,7 @@ namespace ClassroomAPI.Controllers
 
         //Send a message
         [HttpPost("{courseId}/SendMessage")]
-        public async Task<IActionResult> SendMessage(Guid courseId, [FromBody] ChatSubmissionModel model)
+        public async Task<IActionResult> SendMessage(Guid courseId, [FromForm] ChatSubmissionModel model)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null) return Unauthorized("User Id not found!");

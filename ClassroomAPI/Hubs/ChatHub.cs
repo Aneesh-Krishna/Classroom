@@ -1,15 +1,33 @@
-﻿using ClassroomAPI.Services;
+﻿using ClassroomAPI.Data;
+using ClassroomAPI.Services;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClassroomAPI.Hubs
 {
     public class ChatHub : Hub
     {
+        private readonly ClassroomDbContext _context;
+        public ChatHub(ClassroomDbContext context)
+        {
+            _context = context;
+        }
         public override async Task OnConnectedAsync()
         {
             var UserId = Context.UserIdentifier;
             if (UserId != null)
+            {
                 OnlineUserTracker.SetUserOnline(UserId);
+
+                var userCourses = await _context.CourseMembers
+                    .Where(cm => cm.UserId == UserId)
+                    .Select(cm => cm.CourseId.ToString())
+                    .ToListAsync();
+
+                foreach (var courseId in userCourses)
+                    await JoinGroup(courseId);
+            }
+
             await base.OnConnectedAsync();
         }
 
@@ -17,7 +35,18 @@ namespace ClassroomAPI.Hubs
         {
             var UserId = Context.UserIdentifier;
             if (UserId != null)
+            {
                 OnlineUserTracker.SetUserOffline(UserId);
+
+                var userCourses = await _context.CourseMembers
+                    .Where(cm => cm.UserId == UserId)
+                    .Select (cm => cm.CourseId.ToString())
+                    .ToListAsync();
+
+                foreach(var courseId in userCourses)
+                    await LeaveGroup(courseId);
+            }
+
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -40,7 +69,17 @@ namespace ClassroomAPI.Hubs
         //Add user to a signalR group for their course
         public async Task JoinGroup(string courseId)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, courseId);
+            try
+            {
+                Console.WriteLine($"User {Context.ConnectionId} is attempting to join group: {courseId}");
+                await Groups.AddToGroupAsync(Context.ConnectionId, courseId);
+                Console.WriteLine($"User {Context.ConnectionId} successfully joined group: {courseId}");
+                await Clients.Caller.SendAsync("GroupJoined", $"You have joined the course: {courseId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in JoinGroup: {ex.Message}");
+            }
         }
 
 

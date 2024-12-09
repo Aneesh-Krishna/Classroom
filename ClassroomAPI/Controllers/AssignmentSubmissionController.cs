@@ -10,7 +10,6 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class AssignmentSubmissionController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -51,7 +50,7 @@ namespace ClassroomAPI.Controllers
 
         //Submit an assignment
         [HttpPost("{assignmentId}/SubmitAssignment")]
-        public async Task<IActionResult> SubmitAssignment(Guid assignmentId, [FromBody] SubmitAssignmentModel model)
+        public async Task<IActionResult> SubmitAssignment(Guid assignmentId, [FromForm] string text, IFormFile? file)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -76,10 +75,10 @@ namespace ClassroomAPI.Controllers
             if (!isMember)
                 return Unauthorized("You're not authorized!");
 
-            if (model.file == null)
+            if (file == null)
                 return BadRequest("Upload a file!");
 
-            var fileUrl = await _fileService.UploadFileAsync(model.file);
+            var fileUrl = await _fileService.UploadFileAsync(file);
 
             var submission = new AssignmentSubmission
             {
@@ -87,7 +86,7 @@ namespace ClassroomAPI.Controllers
                 AssignmentId = assignmentId,
                 Assignment = assignment,
                 SubmittedBy = user,
-                Text = model.text,
+                Text = text,
                 SubmissionFileUrl = fileUrl,
                 SubmittedAt = DateTime.Now
             };
@@ -102,11 +101,5 @@ namespace ClassroomAPI.Controllers
         {
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
-    }
-
-    public class SubmitAssignmentModel
-    {
-        public string text { get; set; } = string.Empty;
-        public IFormFile? file { get; set; }
     }
 }

@@ -7,6 +7,8 @@ using iTextSharp.text;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Azure.Storage.Blobs;
+using Amazon.S3;
+using Amazon.S3.Model;
 
 namespace ClassroomAPI.Services
 {
@@ -15,11 +17,15 @@ namespace ClassroomAPI.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly IServiceProvider _serviceProvider;
         private readonly IHubContext<ChatHub> _chatHubContext;
-        public SchedulingService(IBackgroundJobClient backgroundJobClient, IServiceProvider serviceProvider, IHubContext<ChatHub> chatHubContext)
+        private readonly IAmazonS3 _s3Client;
+        private readonly string _bucketName;
+        public SchedulingService(IBackgroundJobClient backgroundJobClient, IServiceProvider serviceProvider, IHubContext<ChatHub> chatHubContext, IConfiguration configuration)
         {
             _backgroundJobClient = backgroundJobClient;
             _serviceProvider = serviceProvider;
             _chatHubContext = chatHubContext;
+            _bucketName = configuration["AWS:S3BucketName"];
+            _s3Client = new AmazonS3Client(configuration["AWS:AccessKey"], configuration["AWS:SecretKey"], Amazon.RegionEndpoint.GetBySystemName(configuration["AWS:Region"]));
         }
         public void ScheduleQuizReminder(Guid quizId, DateTime scheduledTime)
         {
@@ -33,7 +39,7 @@ namespace ClassroomAPI.Services
             _backgroundJobClient.Schedule(() => GenerateReport(quizId), reportTime);
         }
 
-        public async void SendReminder(Guid quizId)
+        public async Task SendReminder(Guid quizId)
         {
             //Logic to send a reminder to every member
             using (var scope = _serviceProvider.CreateScope())
@@ -57,14 +63,14 @@ namespace ClassroomAPI.Services
                     foreach (var member in members)
                     { 
                         var message = $"Reminder: The quiz '{quiz.Title}' is starting in 1 minute.";
-                        SendNotification(member.UserId, message).Wait(); 
+                        await SendNotification(member.UserId, message); 
                     }
                 }
             }
         }
 
         //Logic to generate and send report
-        public async void GenerateReport(Guid quizId)
+        public async Task GenerateReport(Guid quizId)
         {
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -116,7 +122,7 @@ namespace ClassroomAPI.Services
 
                     // Upload the report to a file server or blob storage (example: Azure Blob Storage)
                     var fileName = $"{quiz.Title}_Report.pdf";
-                    var reportUrl = await UploadReportToBlobStorage(memoryStream, fileName);
+                    var reportUrl = await UploadReportToS3Storage(memoryStream, fileName);
 
                     if (!string.IsNullOrEmpty(reportUrl))
                     {
@@ -145,11 +151,18 @@ namespace ClassroomAPI.Services
             }
         }
 
-        private async Task<string> UploadReportToBlobStorage(Stream reportStream, string fileName)
+        private async Task<string> UploadReportToS3Storage(Stream reportStream, string fileName)
         {
-            var blobClient = new BlobClient("AzureBlobStorage:ConnectionString", "AzureBlobStorage:ContainerName", fileName);
-            await blobClient.UploadAsync(reportStream, overwrite: true);
-            return blobClient.Uri.AbsoluteUri;
+            var putRequest = new PutObjectRequest
+            {
+                BucketName = _bucketName,
+                Key = fileName,
+                InputStream = reportStream,
+                ContentType = "application/pdf",
+            };
+
+            await _s3Client.PutObjectAsync(putRequest);
+            return $"https://{_bucketName}.s3.amazonaws.com/{fileName}";
         }
 
             private async Task SendNotification(string userId, string message) 

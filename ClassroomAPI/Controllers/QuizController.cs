@@ -10,7 +10,6 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class QuizController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -92,7 +91,7 @@ namespace ClassroomAPI.Controllers
                 Title = model.title,
                 CreatedAt = DateTime.Now,
                 ScheduledTime = model.scheduledTime,
-                Deadline = model.deadline,
+                Deadline = model.scheduledTime.AddMinutes(model.duration),
                 Duration = model.duration,
                 CourseId = courseId,
                 Course = course
@@ -129,7 +128,7 @@ namespace ClassroomAPI.Controllers
 
             existingQuiz.Title = model.title;
             existingQuiz.ScheduledTime = model.scheduledTime;
-            existingQuiz.Deadline = model.deadline;
+            existingQuiz.Deadline = model.scheduledTime.AddMinutes(model.duration);
             existingQuiz.Duration = model.duration;
 
             await _context.SaveChangesAsync();
@@ -170,7 +169,6 @@ namespace ClassroomAPI.Controllers
     {
         public string title { get; set; } = string.Empty;
         public DateTime scheduledTime { get; set; }
-        public DateTime deadline { get; set; }
         public int duration { get; set; }
     }
 }

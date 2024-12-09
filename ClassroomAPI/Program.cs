@@ -8,12 +8,19 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ClassroomAPI.Services;
 using ClassroomAPI.Hubs;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<ClassroomDbContext>(options => 
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<ClassroomDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+    sqlServerOptions => sqlServerOptions.EnableRetryOnFailure
+    (
+        maxRetryCount: 5, 
+        maxRetryDelay: TimeSpan.FromSeconds(30), 
+        errorNumbersToAdd: null
+    )));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<ClassroomDbContext>()
@@ -40,6 +47,16 @@ builder.Services.AddAuthentication(options =>
     });
 
 // Enable CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        });
+});
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -51,12 +68,23 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 // Configure SignalR with Azure SignalR Service
-builder.Services.AddSignalR();
+builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 
 // Add Hangfire
 builder.Services.AddHangfire(x => x.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHangfireServer();
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    options.JsonSerializerOptions.WriteIndented = true; // Optional: Pretty-print the JSON output
+});
+
+builder.Services.AddTransient<FileService>();
 
 builder.Services.AddTransient<NotificationService>();
 
@@ -64,7 +92,39 @@ builder.Services.AddTransient<SchedulingService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c => {
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "ClassroomAPI", Version = "v1" 
+    });
+    
+    // Define the Security Scheme
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme 
+    { 
+        In = ParameterLocation.Header, 
+        Description = "Please enter JWT with Bearer into field", 
+        Name = "Authorization", 
+        Type = SecuritySchemeType.ApiKey, 
+        Scheme = "Bearer" 
+    });
+
+    // Define Security Requirements
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement 
+    { 
+        { 
+            new OpenApiSecurityScheme 
+            { 
+                Reference = new OpenApiReference 
+                { 
+                    Type = ReferenceType.SecurityScheme, 
+                    Id = "Bearer" 
+                } 
+            }, 
+            new string[] 
+            { } 
+        } 
+    });
+});
 
 var app = builder.Build();
 
@@ -88,14 +148,16 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "ClassroomAPI v1"); });
 }
 
-app.UseHttpsRedirection(); 
+app.UseRouting();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 
-app.UseHttpsRedirection();
+app.UseAuthorization();
 
 app.UseHangfireDashboard();
 

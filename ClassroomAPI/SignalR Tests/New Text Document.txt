@@ -1,0 +1,30 @@
+<input type="file" id="fileInput">
+<button onclick="sendMessageWithFile()">Send Message with File</button>
+
+<script>
+    // Function to send a message with a file
+    async function sendMessageWithFile() {
+        const message = document.getElementById("messageInput").value;
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        const userName = "testUser";
+        const courseId = "your-course-id";
+
+        // Upload the file
+        let fileUrl = null;
+        if (file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData
+            });
+            const result = await response.json();
+            fileUrl = result.url;
+        }
+
+        // Send the message with the file URL
+        connection.invoke("SendMessage", courseId, userName, message, fileUrl)
+            .catch(err => console.error(err));
+    }
+</script>
