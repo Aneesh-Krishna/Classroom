@@ -10,6 +10,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class QuizController : ControllerBase
     {
         private readonly ClassroomDbContext _context;

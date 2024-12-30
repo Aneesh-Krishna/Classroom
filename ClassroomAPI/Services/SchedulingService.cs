@@ -138,6 +138,18 @@ namespace ClassroomAPI.Services
                         };
 
                         _context.Chats.Add(reportMessage);
+
+                        var newReport = new Report
+                        {
+                            ReportId = Guid.NewGuid(),
+                            reportUrl = reportUrl,
+                            QuizId = quiz.QuizId,
+                            Quiz = quiz
+                        };
+                        _context.Reports.Add(newReport);
+
+                        quiz.isReportGenerated = true;
+
                         await _context.SaveChangesAsync();
 
                         // Notify the group with the report URL

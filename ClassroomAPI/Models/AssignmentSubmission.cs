@@ -4,6 +4,7 @@
     {
         public Guid AssignmentSubmissionId { get; set; } = Guid.NewGuid();
         public string Text { get; set; } = string.Empty;
+        public string SubmissionFileName { get; set; } = string.Empty;
         public string SubmissionFileUrl { get; set; } = string.Empty;
         public Guid AssignmentId { get; set; }
         public Assignment? Assignment { get; set; }

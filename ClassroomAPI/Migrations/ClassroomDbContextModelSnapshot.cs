@@ -127,6 +127,10 @@ namespace ClassroomAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AssignmentFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AssignmentFileUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -153,6 +157,10 @@ namespace ClassroomAPI.Migrations
 
                     b.Property<Guid>("AssignmentId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SubmissionFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SubmissionFileUrl")
                         .IsRequired()
@@ -187,10 +195,17 @@ namespace ClassroomAPI.Migrations
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FileUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SenderName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -364,6 +379,9 @@ namespace ClassroomAPI.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("isReportGenerated")
+                        .HasColumnType("bit");
+
                     b.HasKey("QuizId");
 
                     b.HasIndex("CourseId");
@@ -397,6 +415,26 @@ namespace ClassroomAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("QuizResponses");
+                });
+
+            modelBuilder.Entity("ClassroomAPI.Models.Report", b =>
+                {
+                    b.Property<Guid>("ReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("reportUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ReportId");
+
+                    b.HasIndex("QuizId");
+
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -594,7 +632,7 @@ namespace ClassroomAPI.Migrations
                     b.HasOne("ClassroomAPI.Models.Course", "Course")
                         .WithMany("Chats")
                         .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ClassroomAPI.Models.ApplicationUser", "User")
@@ -701,6 +739,17 @@ namespace ClassroomAPI.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ClassroomAPI.Models.Report", b =>
+                {
+                    b.HasOne("ClassroomAPI.Models.Quiz", "Quiz")
+                        .WithMany("Reports")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -793,6 +842,8 @@ namespace ClassroomAPI.Migrations
                     b.Navigation("Questions");
 
                     b.Navigation("QuizResponses");
+
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("ClassroomAPI.Models.QuizResponse", b =>

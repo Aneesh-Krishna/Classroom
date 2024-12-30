@@ -11,6 +11,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AssignmentController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -41,6 +42,14 @@ namespace ClassroomAPI.Controllers
 
             var assignments = await _context.Assignments
                 .Where(a => a.CourseId == course.CourseId)
+                .Select(a => new
+                {
+                    a.AssignmentId,
+                    a.Text,
+                    a.AssignmentFileName,
+                    a.AssignmentFileUrl,
+                    a.CourseId
+                })
                 .ToListAsync();
 
             return Ok(assignments);
@@ -54,7 +63,17 @@ namespace ClassroomAPI.Controllers
             if (userId == null)
                 return NotFound("User Id not found!");
 
-            var assignment = await _context.Assignments.FirstOrDefaultAsync(a => a.AssignmentId == assignmentId);
+            var assignment = await _context.Assignments
+                .Where(a => a.AssignmentId == assignmentId)
+                .Select(a => new
+                {
+                    a.AssignmentId,
+                    a.Text,
+                    fileName = a.AssignmentFileName,
+                    fileUrl = a.AssignmentFileUrl,
+                    a.CourseId
+                })
+                .SingleOrDefaultAsync();
             if (assignment == null)
                 return NotFound("Assignment not found!");
 
@@ -86,10 +105,18 @@ namespace ClassroomAPI.Controllers
             if (course.AdminId != userId)
                 return Unauthorized("You're not authorized!");
 
-            if (file == null)
-                return BadRequest("Upload a file!");
-
-            var fileUrl = await _fileService.UploadFileAsync(file);
+            string fileUrl;
+            string fileName;
+            if (file != null)
+            {
+                fileName = file.FileName;
+                fileUrl = await _fileService.UploadFileAsync(file);
+            }
+            else
+            {
+                fileName = " ";
+                fileUrl = " ";
+            }
 
             var assignment = new Assignment
             {
@@ -97,6 +124,7 @@ namespace ClassroomAPI.Controllers
                 CourseId = courseId,
                 Course = course,
                 Text =  text,
+                AssignmentFileName = fileName,
                 AssignmentFileUrl = fileUrl
             };
 
@@ -126,7 +154,7 @@ namespace ClassroomAPI.Controllers
 
             _context.Assignments.Remove(assignment);
             await _context.SaveChangesAsync();
-            return Ok(assignment);
+            return Ok();
         }
 
         private string GetCurrentUserId()

@@ -238,3 +238,8 @@ C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\Azure.Sto
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\System.IO.Hashing.dll
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\AWSSDK.Core.dll
 C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\AWSSDK.S3.dll
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\libman.json
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\ClassroomAPI.staticwebassets.runtime.json
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\Microsoft.AspNetCore.Connections.Abstractions.dll
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\Microsoft.AspNetCore.SignalR.Common.dll
+C:\Users\aneea\source\repos\ClassroomApi\ClassroomAPI\bin\Debug\net8.0\Microsoft.Extensions.Features.dll

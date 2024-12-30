@@ -2,6 +2,7 @@
 using ClassroomAPI.Hubs;
 using ClassroomAPI.Models;
 using ClassroomAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ChatController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -43,6 +45,17 @@ namespace ClassroomAPI.Controllers
 
             var chats = await _context.Chats
                 .Where(c => c.CourseId == courseId)
+                .Select(c => new
+                {
+                    c.ChatId,
+                    c.UserId,
+                    c.CourseId,
+                    c.Message,
+                    c.FileName,
+                    c.FileUrl,
+                    c.SenderName,
+                    c.SentAt
+                })
                 .OrderBy(c => c.SentAt)
                 .ToListAsync();
 
@@ -64,10 +77,17 @@ namespace ClassroomAPI.Controllers
             if (course == null)
                 return NotFound("Course not found!");
 
-            string? fileUrl = null;
+            string fileUrl;
+            string fileName;
             if (model.file != null)
             {
+                fileName = model.file.FileName;
                 fileUrl = await _fileService.UploadFileAsync(model.file);
+            }
+            else
+            {
+                fileName = "";
+                fileUrl = "";
             }
 
             var chat = new Chat
@@ -76,17 +96,35 @@ namespace ClassroomAPI.Controllers
                 CourseId = courseId,
                 Course = course,
                 UserId = userId,
+                SenderName = user.FullName,
                 User = user,
                 SentAt = DateTime.Now,
                 Message = model.message,
+                FileName = fileName,
                 FileUrl = fileUrl
             };
 
             _context.Chats.Add(chat);
             await _context.SaveChangesAsync();
 
+            var realTimeChat = await _context.Chats
+                .Where(c => c.ChatId == chat.ChatId)
+                .Select(c => new ChatDto
+                {
+                    ChatId = c.ChatId,
+                    CourseId = c.CourseId,
+                    CourseName = course.CourseName,
+                    UserId = c.UserId,
+                    SenderName = c.SenderName,
+                    SentAt = c.SentAt,
+                    Message = c.Message,
+                    FileName = c.FileName,
+                    FileUrl = c.FileUrl
+                })
+                .SingleOrDefaultAsync();
+
             // Notify via SignalR
-            await _hubContext.Clients.Group(courseId.ToString()).SendAsync("ReceiveMessage", chat.User.FullName, chat.Message, chat.FileUrl);
+            await _hubContext.Clients.Group(courseId.ToString()).SendAsync("ReceiveMessage", realTimeChat);
 
             return Ok("Message sent");
         }
@@ -117,4 +155,18 @@ namespace ClassroomAPI.Controllers
         public string message { get; set; } = string.Empty;
         public IFormFile? file { get; set; }
     }
+
+    public class ChatDto
+    {
+        public Guid ChatId { get; set; }
+        public Guid CourseId { get; set; }
+        public string CourseName { get; set; }
+        public string UserId { get; set; }
+        public string SenderName { get; set; }
+        public DateTime SentAt { get; set; }
+        public string Message { get; set; }
+        public string FileName { get; set; }
+        public string FileUrl { get; set; }
+    }
+
 }

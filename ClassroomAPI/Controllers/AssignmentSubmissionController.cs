@@ -10,6 +10,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AssignmentSubmissionController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -44,6 +45,16 @@ namespace ClassroomAPI.Controllers
 
             var submissions = await _context.AssignmentSubmissions
                 .Where(asb => asb.AssignmentId == assignment.AssignmentId)
+                .Select(asb => new
+                {
+                    asb.AssignmentSubmissionId,
+                    asb.AssignmentId,
+                    asb.Text,
+                    asb.SubmissionFileName,
+                    asb.SubmissionFileUrl,
+                    asb.SubmittedAt,
+                    SubmittedByName = asb.SubmittedBy.FullName
+                })
                 .ToListAsync();
             return Ok(submissions);
         }
@@ -83,6 +94,7 @@ namespace ClassroomAPI.Controllers
             var submission = new AssignmentSubmission
             {
                 AssignmentSubmissionId = Guid.NewGuid(),
+                SubmissionFileName = file.FileName,
                 AssignmentId = assignmentId,
                 Assignment = assignment,
                 SubmittedBy = user,
@@ -93,6 +105,21 @@ namespace ClassroomAPI.Controllers
 
             _context.AssignmentSubmissions.Add(submission);
             await _context.SaveChangesAsync();
+
+            var submitted = await _context.AssignmentSubmissions
+                .Where(asb => asb.AssignmentSubmissionId == submission.AssignmentSubmissionId)
+                .Select(asb => new
+                {
+                    asb.AssignmentSubmissionId,
+                    asb.AssignmentId,
+                    asb.Text,
+                    asb.SubmissionFileName,
+                    asb.SubmissionFileUrl,
+                    asb.SubmittedAt,
+                    SubmittedByName = asb.SubmittedBy.FullName
+                })
+                .SingleOrDefaultAsync();
+
             return Ok(submission);
         }
 

@@ -10,6 +10,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MaterialController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -41,9 +42,13 @@ namespace ClassroomAPI.Controllers
 
             var materials = await _context.Materials
                 .Where(m => m.CourseId == courseId)
+                .Select(m => new
+                {
+                    m.MaterialId,
+                    m.MaterialName,
+                    m.MaterialUrl
+                })
                 .ToListAsync();
-            if (materials.Count == 0)
-                return Ok( "There's no material! " );
 
             return Ok(materials);
         }

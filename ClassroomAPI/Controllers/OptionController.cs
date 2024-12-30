@@ -9,6 +9,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class OptionController : ControllerBase
     {
         private readonly ClassroomDbContext _context;

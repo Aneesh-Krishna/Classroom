@@ -49,12 +49,13 @@ builder.Services.AddAuthentication(options =>
 // Enable CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("AllowFrontend",
         builder =>
         {
-            builder.AllowAnyOrigin()
+            builder.WithOrigins("http://localhost:5173", "https://localhost:5173")
                 .AllowAnyMethod()
-                .AllowAnyHeader();
+                .AllowAnyHeader()
+                .AllowCredentials();
         });
 });
 
@@ -67,7 +68,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireLowercase = true;
 });
 
-// Configure SignalR with Azure SignalR Service
+// Configure SignalR
 builder.Services.AddSignalR().AddHubOptions<ChatHub>(options =>
 {
     options.EnableDetailedErrors = true;
@@ -89,6 +90,8 @@ builder.Services.AddTransient<FileService>();
 builder.Services.AddTransient<NotificationService>();
 
 builder.Services.AddTransient<SchedulingService>();
+
+builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -155,7 +158,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 

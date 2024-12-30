@@ -1,7 +1,9 @@
-﻿using ClassroomAPI.Models;
+﻿using ClassroomAPI.Data;
+using ClassroomAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,11 +19,68 @@ namespace ClassroomAPI.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IConfiguration _configuration;
-        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration)
+        private readonly ClassroomDbContext _context;
+        public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IConfiguration configuration, ClassroomDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _context = context;
+        }
+
+        [Authorize]
+        [HttpGet("{searchUserName}/users")]
+        public async Task<IActionResult> SearchedUsers(string searchUserName)
+        {
+            var myUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (myUserId == null)
+                return Unauthorized("You're not authorized!");
+
+            var normalizedSearchName = searchUserName.ToUpper();
+
+            var users = await _context.Users
+                .Where(u => EF.Functions.Like(u.UserName.ToUpper(), $"%{normalizedSearchName}%"))
+                .Select(u => new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.FullName,
+                    u.Email,
+                    u.PhoneNumber
+                })
+                .ToListAsync();
+
+            if (users == null || !users.Any())
+                return NotFound("No such user found!");
+
+            return Ok(users);
+        }
+ 
+        //Get a user's details
+        [Authorize]
+        [HttpGet("{userId}/details")]
+        public async Task<IActionResult> UserDetails(string userId)
+        {
+            var myUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (myUserId == null) 
+                return Unauthorized("You're not authorized!");
+
+            var user = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.UserName,
+                    u.FullName,
+                    u.Email,
+                    u.PhoneNumber
+                })
+                .ToListAsync();
+
+            if (user == null)
+                return NotFound("User not found!");
+
+            return Ok(user);
         }
 
         //Register a new admin

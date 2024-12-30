@@ -22,6 +22,7 @@ namespace ClassroomAPI.Data
         public DbSet<Assignment> Assignments { get; set; }
         public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<Material> Materials { get; set; }
+        public DbSet<Report> Reports { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -94,7 +95,7 @@ namespace ClassroomAPI.Data
                 .HasOne(c => c.Course)
                 .WithMany(co => co.Chats)
                 .HasForeignKey(c => c.CourseId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
             builder.Entity<Chat>()
                 .HasOne(c => c.User)
                 .WithMany(u => u.Chats)
@@ -116,6 +117,12 @@ namespace ClassroomAPI.Data
                 .HasOne(asb => asb.SubmittedBy)
                 .WithMany(asb => asb.AssignmentSubmissions)
                 .HasForeignKey(asb => asb.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Report>()
+                .HasOne(r => r.Quiz)
+                .WithMany(q => q.Reports)
+                .HasForeignKey(r => r.QuizId)
                 .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Material>()

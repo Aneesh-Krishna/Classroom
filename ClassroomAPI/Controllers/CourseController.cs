@@ -11,6 +11,7 @@ namespace ClassroomAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CourseController : ControllerBase
     {
         private readonly ClassroomDbContext _context;
@@ -19,6 +20,39 @@ namespace ClassroomAPI.Controllers
         {
             _context = context;
             _hubContext = hubContext;
+        }
+
+        //Get Course Details
+        [HttpGet("{courseId}")]
+        public async Task<IActionResult> GetCourseById(Guid courseId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+                return NotFound("UserId not found!");
+
+            var course = await _context.Courses.SingleOrDefaultAsync(c => c.CourseId == courseId);
+            if (course == null)
+                return NotFound("Course not found!");
+
+            var isMember = await _context.CourseMembers
+                .Where(cm => cm.CourseId == courseId && cm.UserId == userId)
+                .SingleOrDefaultAsync() != null;
+            if (!isMember)
+                return Unauthorized("You're not a member of the course!");
+
+            var courseMembers = await _context.CourseMembers
+                .Where(cm => cm.CourseId == courseId)
+                .Select(cm => new
+                {
+                    Name = cm.User.FullName,
+                    Id = cm.UserId
+                })
+                .ToListAsync();
+
+            if (courseMembers == null)
+                return NotFound("No members!");
+
+            return Ok(courseMembers);
         }
 
         //Get courses of a user
@@ -32,7 +66,14 @@ namespace ClassroomAPI.Controllers
             var courses = await _context.CourseMembers
                 .Include(cm => cm.Course)
                 .Where(cm => cm.UserId == userId)
-                .Select(cm => cm.Course.CourseName)
+                .Select(cm => new
+                {
+                    CourseId = cm.Course.CourseId,
+                    CourseName = cm.Course.CourseName,
+                    Admin = cm.Course.GroupAdmin.FullName,
+                    AdminId = cm.Course.AdminId,
+                    Description = cm.Course.Description
+                })
                 .ToListAsync();
 
             if (courses.Count == 0)
@@ -56,7 +97,12 @@ namespace ClassroomAPI.Controllers
             var members = await _context.CourseMembers
                 .Include(cm => cm.User)
                 .Where(cm => cm.CourseId == course.CourseId)
-                .Select(cm => cm.User.FullName)
+                .Select(cm => new
+                {
+                    Name = cm.User.FullName,
+                    Id = cm.UserId,
+                    MemberId = cm.CourseMemberId
+                })
                 .ToListAsync();
 
             return Ok(members);
@@ -105,6 +151,7 @@ namespace ClassroomAPI.Controllers
                 CourseId = course.CourseId,
                 Course = course,
                 Message = $"Course {course.CourseName} created!",
+                SenderName = admin.FullName,
                 SentAt = DateTime.Now
             };
 
@@ -132,6 +179,10 @@ namespace ClassroomAPI.Controllers
 
             if (course.AdminId != userId)
                 return Unauthorized("You're not authorized!");
+
+            var admin = await _context.Users.FindAsync(userId);
+            if (admin == null)
+                return BadRequest();
 
             var newUser = await _context.Users.FindAsync(newUserId);
             if (newUser == null)
@@ -162,6 +213,7 @@ namespace ClassroomAPI.Controllers
                 UserId = userId,
                 User = user,
                 Message = $"{newMember.User.FullName} has been added!",
+                SenderName = admin.FullName,
                 SentAt = DateTime.Now
             };
 
@@ -193,8 +245,16 @@ namespace ClassroomAPI.Controllers
             if (userMember == null)
                 return NotFound("User is not a member of the course!");
 
+            var removeUserMember = await _context.Users.FindAsync(userMember.UserId);
+            if(removeUserMember == null)
+                return NotFound("User to be removed not found!");
+
             if (course.AdminId != userId)
                 return Unauthorized("You're not authorized!");
+
+            var admin = await _context.Users.FindAsync(userId);
+            if (admin == null)
+                return BadRequest();
 
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
@@ -207,7 +267,8 @@ namespace ClassroomAPI.Controllers
                 Course = course,
                 UserId = userId,
                 User = user,
-                Message = $"{userMember.User.FullName} has been removed!",
+                Message = $"{removeUserMember.FullName} has been removed from the group!",
+                SenderName = admin.FullName,
                 SentAt = DateTime.Now
             };
 
@@ -228,6 +289,9 @@ namespace ClassroomAPI.Controllers
             if (userId == null)
                 return Unauthorized("User Id not found!");
 
+            var user = _context.Users.Find(userId);
+            if(user == null) return BadRequest();
+
             var existingCourse = await _context.Courses.FirstOrDefaultAsync(c => c.CourseId == courseId);
             if (existingCourse == null)
                 return BadRequest("Course not found!");
@@ -240,6 +304,20 @@ namespace ClassroomAPI.Controllers
 
             existingCourse.CourseName = courseName;
             existingCourse.Description = description;
+            
+            var chat = new Chat
+            {
+                ChatId = Guid.NewGuid(),
+                CourseId = courseId,
+                Course = existingCourse,
+                UserId = userId,
+                User = user,
+                Message = "Course details were changed!",
+                SenderName = user.FullName,
+                SentAt = DateTime.Now,
+            };
+            
+            _context.Chats.Add(chat);
             await _context.SaveChangesAsync();
             return Ok(existingCourse);
         }

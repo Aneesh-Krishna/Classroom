@@ -15,8 +15,10 @@ namespace ClassroomAPI.Models
         public DateTime ScheduledTime { get; set; }
         public int Duration { get; set; } //Duration of the quiz in minutes
         public DateTime Deadline { get; set; }
+        public bool isReportGenerated { get; set; } = false;
 
         public ICollection<Question> Questions { get; set; } = new List<Question>();
         public ICollection<QuizResponse> QuizResponses { get; set; } = new List<QuizResponse>();
+        public ICollection<Report> Reports { get; set; } = new List<Report>();
     }
 }

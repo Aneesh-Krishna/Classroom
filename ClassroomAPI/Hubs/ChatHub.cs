@@ -1,4 +1,5 @@
 ﻿using ClassroomAPI.Data;
+using ClassroomAPI.Models;
 using ClassroomAPI.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -14,18 +15,12 @@ namespace ClassroomAPI.Hubs
         }
         public override async Task OnConnectedAsync()
         {
-            var UserId = Context.UserIdentifier;
-            if (UserId != null)
+            var httpContext = Context.GetHttpContext();
+            var courseId = httpContext.Request.Query["courseId"];
+
+            if (!string.IsNullOrEmpty(courseId))
             {
-                OnlineUserTracker.SetUserOnline(UserId);
-
-                var userCourses = await _context.CourseMembers
-                    .Where(cm => cm.UserId == UserId)
-                    .Select(cm => cm.CourseId.ToString())
-                    .ToListAsync();
-
-                foreach (var courseId in userCourses)
-                    await JoinGroup(courseId);
+                await Groups.AddToGroupAsync(Context.ConnectionId, courseId);
             }
 
             await base.OnConnectedAsync();
@@ -51,18 +46,15 @@ namespace ClassroomAPI.Hubs
         }
 
         //Send message to a specific course
-        public async Task SendMessage(string courseId, string userName, string message, string? fileUrl = null)
+        public async Task SendMessage( string courseId, object realTimeChat)
         {
-            if(fileUrl != null)
-                await Clients.Group(courseId).SendAsync("ReceiveMessage", userName, message, fileUrl);
-            else
-                await Clients.Group(courseId).SendAsync("ReceiveMessage", userName, message);
+                await Clients.Group(courseId).SendAsync("ReceiveMessage", realTimeChat);
         }
 
         //Send in-app notification to a user
-        public async Task SendNotification(string userId, string notification)
+        public async Task SendNotification(string courseId, string notification)
         {
-            await Clients.Group(userId).SendAsync("ReceiveNotification", notification);
+            await Clients.Group(courseId).SendAsync("ReceiveNotification", notification);
         }
 
 

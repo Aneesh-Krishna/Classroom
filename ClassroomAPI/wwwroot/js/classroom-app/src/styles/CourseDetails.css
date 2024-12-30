@@ -1,0 +1,117 @@
+/* Overall container */
+.course-details-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: #f9f9f9;
+    border-color: #b4afaf;
+    border-style: solid;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Course header styling */
+.course-header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.course-title {
+    font-size: 36px;
+    font-weight: bold;
+    color: #333;
+}
+
+.course-admin {
+    font-size: 18px;
+    color: #555;
+}
+
+.course-description {
+    font-size: 16px;
+    color: #777;
+    margin-top: 10px;
+}
+
+/* Members section */
+.course-members {
+    margin-top: 40px;
+}
+
+.course-members h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.loading-text {
+    font-size: 18px;
+    color: #007bff;
+}
+
+.no-members-text {
+    font-size: 18px;
+    color: #dc3545;
+}
+
+/* Member list */
+.member-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.member-item {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    color: #333;
+    transition: background-color 0.3s ease;
+}
+
+.member-item:hover {
+    background-color: #f1f1f1;
+}
+
+.member-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+/* Back link styling */
+.return-link {
+    display: inline-block;
+    margin-top: 30px;
+    font-size: 16px;
+    color: #007bff;
+    text-decoration: none;
+    text-align: center;
+}
+
+.return-link:hover {
+    text-decoration: underline;
+}
+
+.course-actions {
+    display: flex;
+    justify-content: center; /* Centers buttons horizontally */
+    align-items: center; /* Centers buttons vertically */
+    gap: 10px; /* Adds spacing between buttons */
+    margin-top: 20px; /* Adjusts spacing above the buttons */
+}
+
+.course-actions .btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.list-group-item :hover{
+    background-color: #c1bfbf;
+}

@@ -40,5 +40,35 @@ namespace ClassroomAPI.Services
 
             return $"https://{_bucketName}.s3.amazonaws.com/{fileName}";
         }
+
+        public async Task<Stream> DownloadFileAsync(string fileName)
+        {
+            try
+            {
+                var getRequest = new GetObjectRequest
+                {
+                    BucketName = _bucketName,
+                    Key = fileName
+                };
+
+                using (var response = await _s3Client.GetObjectAsync(getRequest))
+                {
+                    var memoryStream = new MemoryStream();
+                    await response.ResponseStream.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+                    return memoryStream;
+                }
+            }
+            catch (AmazonS3Exception ex)
+            {
+                Console.WriteLine($"Error encountered on server. Message:'{ex.Message}'");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unknown error encountered. Message:'{ex.Message}'");
+                throw;
+            }
+        }
     }
 }
