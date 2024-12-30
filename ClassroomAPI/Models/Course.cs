@@ -17,5 +17,6 @@ namespace ClassroomAPI.Models
         public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
         public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
         public ICollection<Material> Materials { get; set; } = new List<Material>();
+        public ICollection<Meeting> Meetings { get; set; } = new List<Meeting>();
     }
 }

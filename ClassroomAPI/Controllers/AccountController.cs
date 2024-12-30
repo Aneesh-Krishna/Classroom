@@ -29,6 +29,17 @@ namespace ClassroomAPI.Controllers
         }
 
         [Authorize]
+        [HttpGet("userName")]
+        public async Task<IActionResult> MyUsername()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var userName = await _context.Users.Where(u => u.Id == userId).Select(u => u.UserName).SingleOrDefaultAsync();
+            
+            return Ok(userName); 
+        }
+
+        [Authorize]
         [HttpGet("{searchUserName}/users")]
         public async Task<IActionResult> SearchedUsers(string searchUserName)
         {

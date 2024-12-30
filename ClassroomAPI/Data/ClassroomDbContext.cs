@@ -23,6 +23,8 @@ namespace ClassroomAPI.Data
         public DbSet<AssignmentSubmission> AssignmentSubmissions { get; set; }
         public DbSet<Material> Materials { get; set; }
         public DbSet<Report> Reports { get; set; }
+        public DbSet<Participant> Participants { get; set; }
+        public DbSet<Meeting> Meetings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -129,6 +131,18 @@ namespace ClassroomAPI.Data
                 .HasOne(m => m.Course)
                 .WithMany(c => c.Materials)
                 .HasForeignKey(m => m.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Meeting>()
+                .HasOne(m => m.Course)
+                .WithMany(c => c.Meetings)
+                .HasForeignKey(m => m.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Participant>()
+                .HasOne(p => p.Meeting)
+                .WithMany(m => m.Participants)
+                .HasForeignKey(p => p.MeetingId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
