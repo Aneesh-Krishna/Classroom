@@ -46,6 +46,13 @@ namespace ClassroomAPI.Controllers
 
             var options = await _context.Options
                 .Where(o => o.QuestionId == questionId)
+                .Select(o => new
+                {
+                    o.OptionId,
+                    o.Text,
+                    o.QuestionId,
+                    o.IsCorrect
+                })
                 .ToListAsync();
 
             return Ok(options);
@@ -75,12 +82,20 @@ namespace ClassroomAPI.Controllers
                 .FirstOrDefaultAsync() != null;
             if (!isMember) return Unauthorized("You're not authorized!");
 
-            return Ok(option);
+            var returnOption = new
+            {
+                option.OptionId,
+                option.QuestionId,
+                option.Text,
+                option.IsCorrect
+            };
+
+            return Ok(returnOption);
         }
 
         //Add option
         [HttpPost("{questionId}/AddOption")]
-        public async Task<IActionResult> AddOption(Guid questionId, [FromBody] AddOptionModel model)
+        public async Task<IActionResult> AddOption(Guid questionId, [FromForm] string text, [FromForm] bool isCorrect)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -104,20 +119,29 @@ namespace ClassroomAPI.Controllers
             var option = new Option
             {
                 OptionId = Guid.NewGuid(),
-                Text = model.text,
-                IsCorrect = model.isCorrect,
+                Text = text,
+                IsCorrect = isCorrect,
                 QuestionId = questionId,
                 Question = question
             };
 
             _context.Options.Add(option);
             await _context.SaveChangesAsync();
-            return Ok(option);
+
+            var returnOption = new
+            {
+                option.OptionId,
+                option.QuestionId,
+                option.Text,
+                option.IsCorrect
+            };
+
+            return Ok(returnOption);
         }
 
         //Update option
         [HttpPost("{optionId}/UpdateOption")]
-        public async Task<IActionResult> UpdateOption(Guid optionId, [FromBody] AddOptionModel model)
+        public async Task<IActionResult> UpdateOption(Guid optionId, [FromForm] string text, [FromForm] bool isCorrect)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -142,11 +166,20 @@ namespace ClassroomAPI.Controllers
             if (course.AdminId != userId)
                 return Unauthorized("You're not authorized!");
 
-            existingOption.Text = model.text;
-            existingOption.IsCorrect = model.isCorrect;
+            existingOption.Text = text;
+            existingOption.IsCorrect = isCorrect;
 
             await _context.SaveChangesAsync();
-            return Ok(existingOption);
+
+            var returnOption = new
+            {
+                existingOption.OptionId,
+                existingOption.QuestionId,
+                existingOption.Text,
+                existingOption.IsCorrect
+            };
+
+            return Ok(returnOption);
         }
 
         //Delete option
@@ -178,18 +211,12 @@ namespace ClassroomAPI.Controllers
 
             _context.Options.Remove(existingOption);
             await _context.SaveChangesAsync();
-            return Ok(existingOption);
+            return Ok();
         }
 
         private string GetCurrentUserId()
         {
             return User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
-    }
-
-    public class AddOptionModel
-    {
-        public string text { get; set; } = string.Empty;
-        public bool isCorrect { get; set; }
     }
 }

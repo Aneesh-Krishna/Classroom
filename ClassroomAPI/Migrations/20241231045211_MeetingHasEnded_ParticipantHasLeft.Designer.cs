@@ -4,6 +4,7 @@ using ClassroomAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClassroomAPI.Migrations
 {
     [DbContext(typeof(ClassroomDbContext))]
-    partial class ClassroomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241231045211_MeetingHasEnded_ParticipantHasLeft")]
+    partial class MeetingHasEnded_ParticipantHasLeft
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -310,6 +313,9 @@ namespace ClassroomAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<Guid>("CourseId")
                         .HasColumnType("uniqueidentifier");
 
@@ -321,6 +327,8 @@ namespace ClassroomAPI.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("MeetingId");
+
+                    b.HasIndex("ApplicationUserId");
 
                     b.HasIndex("CourseId");
 
@@ -741,6 +749,10 @@ namespace ClassroomAPI.Migrations
 
             modelBuilder.Entity("ClassroomAPI.Models.Meeting", b =>
                 {
+                    b.HasOne("ClassroomAPI.Models.ApplicationUser", null)
+                        .WithMany("Meetings")
+                        .HasForeignKey("ApplicationUserId");
+
                     b.HasOne("ClassroomAPI.Models.Course", "Course")
                         .WithMany("Meetings")
                         .HasForeignKey("CourseId")
@@ -770,7 +782,7 @@ namespace ClassroomAPI.Migrations
                         .IsRequired();
 
                     b.HasOne("ClassroomAPI.Models.ApplicationUser", "User")
-                        .WithMany("MeetingParticipants")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -826,7 +838,7 @@ namespace ClassroomAPI.Migrations
                     b.HasOne("ClassroomAPI.Models.Quiz", "Quiz")
                         .WithMany("Reports")
                         .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Quiz");
@@ -893,7 +905,7 @@ namespace ClassroomAPI.Migrations
 
                     b.Navigation("CourseMemberships");
 
-                    b.Navigation("MeetingParticipants");
+                    b.Navigation("Meetings");
 
                     b.Navigation("QuizResponses");
                 });

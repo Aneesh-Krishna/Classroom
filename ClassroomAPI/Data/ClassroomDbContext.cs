@@ -125,7 +125,7 @@ namespace ClassroomAPI.Data
                 .HasOne(r => r.Quiz)
                 .WithMany(q => q.Reports)
                 .HasForeignKey(r => r.QuizId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Material>()
                 .HasOne(m => m.Course)
@@ -143,6 +143,12 @@ namespace ClassroomAPI.Data
                 .HasOne(p => p.Meeting)
                 .WithMany(m => m.Participants)
                 .HasForeignKey(p => p.MeetingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Participant>()
+                .HasOne(p => p.User)
+                .WithMany(u => u.MeetingParticipants)
+                .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

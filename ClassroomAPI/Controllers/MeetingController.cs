@@ -24,6 +24,41 @@ namespace ClassroomAPI.Controllers
             _meetContext = meetContext;
         }
 
+        [HttpGet("{courseId}/getMeetings")]
+        public async Task<IActionResult> GetMeetings(Guid courseId)
+        {
+            var userId = getCurrentUserId();
+            if (userId == null)
+                return Unauthorized("You're not logged in!");
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return Unauthorized("You're not registered!");
+
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseId == courseId);
+            if (course == null)
+                return NotFound("Course not found!");
+
+            var isMember = await _context.CourseMembers
+                .Where(cm => cm.UserId == userId && cm.CourseId == courseId)
+                .SingleOrDefaultAsync() != null;
+
+            if (!isMember)
+                return Unauthorized("You're not a member of the course!");
+
+            var meetings = await _context.Meetings
+                .Where(m => m.CourseId == courseId)
+                .Select(m => new
+                {
+                    m.MeetingId,
+                    m.MeetingName,
+                    m.hasEnded
+                })
+                .ToListAsync();
+
+            return Ok(meetings);
+        }
+
         [HttpGet("{meetingId}/getParticipants")]
         public async Task<IActionResult> GetParticipants(Guid meetingId)
         {
@@ -44,7 +79,7 @@ namespace ClassroomAPI.Controllers
         }
 
         [HttpPost("{courseId}/CreateMeeting")]
-        public async Task<IActionResult> CreateMeeting(Guid courseId, [FromBody] string meetingName)
+        public async Task<IActionResult> CreateMeeting(Guid courseId, [FromForm] string meetingName)
         {
             var userId = getCurrentUserId();
             if (userId == null)
@@ -99,7 +134,7 @@ namespace ClassroomAPI.Controllers
         }
 
         [HttpPost("{meetingId}/JoinMeeting")]
-        public async Task<IActionResult> JoinMeeting(Guid meetingId, [FromBody] string newParticipantUserId)
+        public async Task<IActionResult> JoinMeeting(Guid meetingId)
         {
             var userId = getCurrentUserId();
             if (userId == null)
@@ -108,10 +143,6 @@ namespace ClassroomAPI.Controllers
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
                 return Unauthorized("You're not authorized!");
-
-            var newParticipantUser = await _context.Users.FindAsync(newParticipantUserId);
-            if(newParticipantUser == null)  
-                return NotFound("User not found!");
             
             var meeting = await _context.Meetings.SingleOrDefaultAsync(m => m.MeetingId == meetingId);
             if (meeting == null)
@@ -125,13 +156,15 @@ namespace ClassroomAPI.Controllers
                 return NotFound("Course not found!");
 
             var isCourseMember = await _context.CourseMembers
-                .Where(cm => cm.UserId == newParticipantUserId)
-                .SingleOrDefaultAsync() != null;
+                .AnyAsync(cm => cm.UserId == userId && cm.CourseId == course.CourseId);
             if (!isCourseMember)
                 return BadRequest("You're not enrolled in the course!");
 
-            if (userId != course.AdminId || userId != newParticipantUserId)
-                return Unauthorized("You're not authorized!");
+            //var hasJoined = await _context.Participants
+            //    .AnyAsync(p => p.UserId == userId && p.MeetingId == meeting.MeetingId);
+
+            //if (hasJoined)
+            //    return BadRequest("You've already joined the meeting!");
 
             var participant = new Participant
             {
@@ -139,33 +172,30 @@ namespace ClassroomAPI.Controllers
                 MeetingId = meetingId,
                 MeetingName = meeting.MeetingName,
                 Meeting = meeting,
-                UserId = newParticipantUserId,
-                User = newParticipantUser
+                UserId = userId,
+                User = user
             };
 
             _context.Participants.Add(participant);
             await _context.SaveChangesAsync();
 
-            var returnParticipant = await _context.Participants
-                .Where(p => p.UserId == userId && p.MeetingId == meetingId)
-                .Select(p => new
-                {
-                    p.ParticipantId,
-                    p.MeetingId,
-                    p.UserId,
-                    p.MeetingName,
-                    ParticipantName = p.User.UserName
-                })
-                .SingleOrDefaultAsync();
+            var returnParticipant = new
+            {
+                participant.ParticipantId,
+                participant.MeetingId,
+                participant.MeetingName,
+                participant.UserId,
+                participant.User.UserName
+            };
 
-            await _meetContext.Groups.AddToGroupAsync(newParticipantUserId, meetingId.ToString());
-            await _meetContext.Clients.Groups(meetingId.ToString()).SendAsync("UserJoined", newParticipantUser.UserName);
+            await _meetContext.Groups.AddToGroupAsync(userId, meetingId.ToString());
+            await _meetContext.Clients.Groups(meetingId.ToString()).SendAsync("UserJoined", user.UserName);
    
             return Ok(returnParticipant);
         }
 
-        [HttpPost("{meetingId}/LeaveMeeting")]
-        public async Task<IActionResult> LeaveMeeting(Guid meetingId, [FromBody] Guid participantId)
+        [HttpPut("{meetingId}/LeaveMeeting")]
+        public async Task<IActionResult> LeaveMeeting(Guid meetingId)
         {
             var userId = getCurrentUserId();
             if (userId == null)
@@ -183,9 +213,6 @@ namespace ClassroomAPI.Controllers
             if (participant == null)
                 return BadRequest("Participant not found!");
 
-            if (userId != course.AdminId || userId != participant.UserId)
-                return Unauthorized("You're not authorized to perform this task!");
-
             participant.hasLeft = true;
             await _context.SaveChangesAsync();
 
@@ -195,7 +222,7 @@ namespace ClassroomAPI.Controllers
             return Ok();
         }
 
-        [HttpPost("{meetingId}/EndMeeting")]
+        [HttpPut("{meetingId}/EndMeeting")]
         public async Task<IActionResult> EndMeeting(Guid meetingId)
         {
             var userId = getCurrentUserId();
@@ -215,6 +242,8 @@ namespace ClassroomAPI.Controllers
 
             if (userId != course.AdminId)
                 return Unauthorized("Only the admin is authorized to perform this task!");
+
+            meeting.hasEnded = true;
 
             var participants = await _context.Participants.Where(p => p.MeetingId == meetingId).ToListAsync();
             

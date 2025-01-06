@@ -20,13 +20,15 @@ namespace ClassroomAPI.Services
         private readonly IHubContext<ChatHub> _chatHubContext;
         private readonly IAmazonS3 _s3Client;
         private readonly string _bucketName;
-        public ReportService(IBackgroundJobClient backgroundJobClient, IServiceProvider serviceProvider, IHubContext<ChatHub> chatHubContext, IConfiguration configuration)
+        private readonly IHubContext<ChatHub> _hubContext;
+        public ReportService(IBackgroundJobClient backgroundJobClient, IServiceProvider serviceProvider, IHubContext<ChatHub> chatHubContext, IConfiguration configuration, IHubContext<ChatHub> hubContext)
         {
             _backgroundJobClient = backgroundJobClient;
             _serviceProvider = serviceProvider;
             _chatHubContext = chatHubContext;
             _bucketName = configuration["AWS:S3BucketName"];
             _s3Client = new AmazonS3Client(configuration["AWS:AccessKey"], configuration["AWS:SecretKey"], Amazon.RegionEndpoint.GetBySystemName(configuration["AWS:Region"]));
+            _hubContext = hubContext;
         }
 
         public async Task GenerateReport(Guid quizId)
@@ -60,7 +62,8 @@ namespace ClassroomAPI.Services
                     var document = new Document();
                     PdfWriter.GetInstance(document, memoryStream).CloseStream = false;
                     document.Open();
-                    document.Add(new Paragraph("Quiz Report"));
+                    string heading = "Quiz Report of: " + quiz.Title;
+                    document.Add(new Paragraph(heading));
 
                     var members = await _context.CourseMembers
                         .Where(cm => cm.CourseId == quiz.CourseId)
@@ -106,6 +109,21 @@ namespace ClassroomAPI.Services
                         };
 
                         _context.Chats.Add(reportMessage);
+
+                        var realTimeChat = new
+                        {
+                            ChatId = reportMessage.ChatId,
+                            CourseId = reportMessage.CourseId,
+                            CourseName = course.CourseName,
+                            UserId = reportMessage.UserId,
+                            SenderName = reportMessage.SenderName,
+                            SentAt = reportMessage.SentAt,
+                            Message = reportMessage.Message,
+                            FileName = reportMessage.FileName,
+                            FileUrl = reportMessage.FileUrl
+                        };
+
+                        await _hubContext.Clients.Group(course.CourseId.ToString()).SendAsync("ReceiveMessage", realTimeChat);
 
                         var newReport = new Report
                         {

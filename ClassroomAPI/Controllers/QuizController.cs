@@ -41,6 +41,16 @@ namespace ClassroomAPI.Controllers
 
             var quizzes = await _context.Quizzes
                 .Where(q => q.CourseId == courseId)
+                .Select(q => new
+                {
+                    q.QuizId,
+                    q.Title,
+                    q.CourseId,
+                    q.CreatedAt,
+                    q.ScheduledTime,
+                    q.Deadline,
+                    q.Duration
+                })
                 .ToListAsync();
 
             return Ok(quizzes);
@@ -68,12 +78,23 @@ namespace ClassroomAPI.Controllers
             if (!isMember)
                 return Unauthorized("You're not authorized!");
 
-            return Ok(quiz);
+            var returnQuiz = new
+            {
+                quizId = quiz.QuizId,
+                title = quiz.Title,
+                courseId = quiz.CourseId,
+                createdAt = quiz.CreatedAt,
+                scheduledTime = quiz.ScheduledTime,
+                deadline = quiz.Deadline,
+                duration = quiz.Duration
+            };
+
+            return Ok(returnQuiz);
         }
 
         //Create quiz
         [HttpPost("{courseId}/CreateQuiz")]
-        public async Task<IActionResult> CreateQuiz(Guid courseId, [FromBody] CreateQuizModel model)
+        public async Task<IActionResult> CreateQuiz(Guid courseId, [FromForm] string quizTitle, [FromForm] DateTime scheduledTime, [FromForm] int duration)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -89,11 +110,11 @@ namespace ClassroomAPI.Controllers
             var quiz = new Quiz
             {
                 QuizId = Guid.NewGuid(),
-                Title = model.title,
+                Title = quizTitle,
                 CreatedAt = DateTime.Now,
-                ScheduledTime = model.scheduledTime,
-                Deadline = model.scheduledTime.AddMinutes(model.duration),
-                Duration = model.duration,
+                ScheduledTime = scheduledTime,
+                Deadline = scheduledTime.AddMinutes(duration+20),
+                Duration = duration,
                 CourseId = courseId,
                 Course = course
             };
@@ -105,12 +126,23 @@ namespace ClassroomAPI.Controllers
             _schedulingService.ScheduleQuizReminder(quiz.QuizId, quiz.ScheduledTime);
             _schedulingService.ScheduleReportGeneration(quiz.QuizId, quiz.Deadline);
 
-            return Ok(quiz);
+            var returnQuiz = new
+            {
+                quizId = quiz.QuizId,
+                title = quiz.Title,
+                courseId = quiz.CourseId,
+                createdAt = quiz.CreatedAt,
+                scheduledTime = quiz.ScheduledTime,
+                deadline = quiz.Deadline,
+                duration = quiz.Duration
+            };
+
+            return Ok(returnQuiz);
         }
 
         //Update a quiz
         [HttpPut("{quizId}/UpdateQuiz")]
-        public async Task<IActionResult> UpdateQuiz(Guid quizId, [FromBody] CreateQuizModel model)
+        public async Task<IActionResult> UpdateQuiz(Guid quizId, [FromForm] string quizTitle, [FromForm] DateTime scheduledTime, [FromForm] int duration)
         {
             var userId = GetCurrentUserId();
             if (userId == null) 
@@ -127,13 +159,25 @@ namespace ClassroomAPI.Controllers
             if (course.AdminId != userId)
                 return Unauthorized("You're not authorized!");
 
-            existingQuiz.Title = model.title;
-            existingQuiz.ScheduledTime = model.scheduledTime;
-            existingQuiz.Deadline = model.scheduledTime.AddMinutes(model.duration);
-            existingQuiz.Duration = model.duration;
+            existingQuiz.Title = quizTitle;
+            existingQuiz.ScheduledTime = scheduledTime;
+            existingQuiz.Deadline = scheduledTime.AddMinutes(duration);
+            existingQuiz.Duration = duration;
 
             await _context.SaveChangesAsync();
-            return Ok(existingQuiz);
+
+            var returnQuiz = new
+            {
+                quizId = existingQuiz.QuizId,
+                title = existingQuiz.Title,
+                courseId = existingQuiz.CourseId,
+                createdAt = existingQuiz.CreatedAt,
+                scheduledTime = existingQuiz.ScheduledTime,
+                deadline = existingQuiz.Deadline,
+                duration = existingQuiz.Duration
+            };
+
+            return Ok(returnQuiz);
         }
 
         //Delete a quiz
@@ -157,7 +201,7 @@ namespace ClassroomAPI.Controllers
 
             _context.Quizzes.Remove(existingQuiz);
             await _context.SaveChangesAsync();
-            return Ok(existingQuiz);
+            return Ok();
         }
 
         private string GetCurrentUserId()

@@ -4,6 +4,7 @@ using ClassroomAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClassroomAPI.Migrations
 {
     [DbContext(typeof(ClassroomDbContext))]
-    partial class ClassroomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241231075827_ParticipantForeignKey")]
+    partial class ParticipantForeignKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -826,7 +829,7 @@ namespace ClassroomAPI.Migrations
                     b.HasOne("ClassroomAPI.Models.Quiz", "Quiz")
                         .WithMany("Reports")
                         .HasForeignKey("QuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Quiz");
