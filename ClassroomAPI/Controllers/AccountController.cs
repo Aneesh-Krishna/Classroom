@@ -40,6 +40,24 @@ namespace ClassroomAPI.Controllers
         }
 
         [Authorize]
+        [HttpGet("isAdmin")]
+        public async Task<IActionResult> isAdmin()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized("User Id not found!");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return NotFound("User not found!");
+
+            if (user.Role != Roles.Admin)
+                return BadRequest("Not the admin");
+
+            return Ok("Admin");
+        }
+
+        [Authorize]
         [HttpGet("{searchUserName}/users")]
         public async Task<IActionResult> SearchedUsers(string searchUserName)
         {
