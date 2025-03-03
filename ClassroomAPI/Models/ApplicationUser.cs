@@ -15,6 +15,7 @@ namespace ClassroomAPI.Models
         public ICollection<AssignmentSubmission> AssignmentSubmissions { get; set; } = new List<AssignmentSubmission>();
         public ICollection<Chat> Chats { get; set; } = new List<Chat>();
         public ICollection<Participant> MeetingParticipants { get; set; } = new List<Participant>();
+        public ICollection<LibraryMaterialUpload> LibraryMaterialsUploader { get; set; } = new List<LibraryMaterialUpload>();
     }
 
     public enum Roles

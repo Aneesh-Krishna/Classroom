@@ -18,6 +18,32 @@ namespace ClassroomAPI.Controllers
             _context = context;
         }
 
+        //Check if the current user has submitted a response already
+        [HttpGet("{quizId}/hasSubmitted")]
+        public async Task<IActionResult> HasSubmitted(Guid quizId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Unauthorized("You're not logged in!");
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return Unauthorized("You're not registered!");
+
+            var quiz = await _context.Quizzes.FirstOrDefaultAsync(q => q.QuizId == quizId);
+            if (quiz == null)
+                return NotFound("Quiz not found!");
+
+            var hasSubmitted = await _context.QuizResponses
+                .Where(qr => qr.QuizId == quizId && qr.UserId == userId)
+                .FirstOrDefaultAsync() != null;
+
+            if (hasSubmitted)
+                return BadRequest();
+
+            return Ok();
+        }
+
         //All Responses of a quiz
         [HttpGet("{quizId}/GetAllResponses")]
         public async Task<IActionResult> GetAllResponses(Guid quizId)

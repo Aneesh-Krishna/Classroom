@@ -1,0 +1,18 @@
+[req]
+distinguished_name = req_distinguished_name
+x509_extensions = v3_ca
+prompt = no
+
+[req_distinguished_name]
+C = US
+ST = State
+L = City
+O = Organization
+OU = Org Unit
+CN = 98.70.74.7   # Your public IP address
+
+[v3_ca]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = 98.70.74.7   # Your public IP address

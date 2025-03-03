@@ -26,6 +26,8 @@ namespace ClassroomAPI.Data
         public DbSet<Participant> Participants { get; set; }
         public DbSet<Meeting> Meetings { get; set; }
 
+        public DbSet<LibraryMaterialUpload> LibraryMaterials { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -149,6 +151,12 @@ namespace ClassroomAPI.Data
                 .HasOne(p => p.User)
                 .WithMany(u => u.MeetingParticipants)
                 .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<LibraryMaterialUpload>()
+                .HasOne(lm => lm.Uploader)
+                .WithMany(u => u.LibraryMaterialsUploader)
+                .HasForeignKey(lm => lm.UploaderId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
